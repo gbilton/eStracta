@@ -59,3 +59,7 @@ def get_companies():
 def delete_company(cnpj: str):
     CompanyService.delete_company(cnpj=cnpj)
     return Response(status=204)
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
