@@ -2,31 +2,17 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID, uuid4
 from app.models.company import Company
-from app.models.user import CompanyModel
+from app.models.company import Company
 from app.db import db
+from app.models.enums import CompanySortField, SortOrder
 
 
 class CompanyService:
-    companies: list[Company] = []
-
-    # @classmethod
-    # def add_company(
-    #     cls, cnpj: str, nome_razao: str, nome_fantasia: str, cnae: str
-    # ) -> Company:
-    #     new_company = Company(
-    #         cnpj=cnpj,
-    #         nome_razao=nome_razao,
-    #         nome_fantasia=nome_fantasia,
-    #         cnae=cnae,
-    #     )
-    #     cls.companies.append(new_company)
-    #     return new_company
-
     @classmethod
     def add_company(
         cls, cnpj: str, nome_razao: str, nome_fantasia: str, cnae: str
     ) -> Company:
-        new_company = CompanyModel(
+        new_company = Company(
             id=uuid4(),
             cnpj=cnpj,
             nome_razao=nome_razao,
@@ -39,20 +25,32 @@ class CompanyService:
 
     @classmethod
     def get_company(cls, company_id: UUID) -> Optional[Company]:
-        for company in cls.companies:
-            if company.id == company_id:
-                return company
-        return
+        company = db.get_or_404(Company, company_id)
+        return company
 
     @classmethod
     def get_companies(
         cls,
         start: Optional[int] = None,
         limit: Optional[int] = None,
-        sort: Optional[str] = None,
-        dir: Optional[str] = None,
-    ):
-        return cls.companies
+        sort: Optional[CompanySortField] = None,
+        dir: Optional[SortOrder] = None,
+    ) -> list[Company]:
+        stmt = db.select(Company)
+        if start is not None:
+            stmt = stmt.offset(start)
+        if limit is not None:
+            stmt = stmt.limit(limit)
+
+        if sort is not None:
+            if dir is None or dir == SortOrder.ASCENDING:
+                stmt = stmt.order_by(getattr(Company, sort.value))
+            elif dir == SortOrder.DESCENDING:
+                stmt = stmt.order_by(getattr(Company, sort.value).desc())
+
+        companies = db.session.execute(stmt).scalars().all()
+
+        return companies
 
     @classmethod
     def update_company(
@@ -62,23 +60,24 @@ class CompanyService:
         cnae: Optional[str],
     ) -> Optional[Company]:
 
+        company = db.get_or_404(Company, company_id)
         modified: bool = False
-        for company in cls.companies:
-            if company.id == company_id:
-                if nome_fantasia:
-                    company.nome_fantasia = nome_fantasia
-                    modified = True
-                if cnae:
-                    company.cnae = cnae
-                    modified = True
-                if modified:
-                    company.updated_at = datetime.now()
-                    return company
+        if nome_fantasia:
+            company.nome_fantasia = nome_fantasia
+            modified = True
+        if cnae:
+            company.cnae = cnae
+            modified = True
+        if modified:
+            company.updated_at = datetime.now()
+            db.session.commit()
+            return company
         return
 
     @classmethod
-    def delete_company(cls, cnpj: str):
-        for i, company in enumerate(cls.companies):
-            if company.cnpj == cnpj:
-                cls.companies.pop(i)
-                return
+    def delete_company(cls, cnpj: str) -> None:
+        stmt = db.select(Company).where(Company.cnpj == cnpj)
+        company = db.one_or_404(stmt)
+        db.session.delete(company)
+        db.session.commit()
+        return

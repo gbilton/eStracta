@@ -1,5 +1,7 @@
+from typing import Optional
 from uuid import UUID
-from flask import Flask, Response, request
+from flask import Flask, Response, jsonify, request
+from flask_migrate import Migrate
 
 from app.models.company import Company
 from app.services.company_service import CompanyService
@@ -10,6 +12,7 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = (
     "postgresql://postgres:eStractaPassword@localhost:5432/eStracta"
 )
+migrate = Migrate(app, db)
 
 # initialize the app with the extension
 db.init_app(app)
@@ -36,19 +39,17 @@ def create_company():
         cnae=cnae,
     )
 
-    return created_company.dict(), 201
+    return jsonify(created_company), 201
 
 
 @app.patch("/companies/<company_id>")
 def update_company(company_id: str):
     nome_fantasia: str = request.form["nome_fantasia"]
     cnae: str = request.form["cnae"]
-
     updated_company: Company = CompanyService.update_company(
         company_id=UUID(company_id), nome_fantasia=nome_fantasia, cnae=cnae
     )
-
-    return updated_company.dict(), 200
+    return jsonify(updated_company), 200
 
 
 @app.get("/companies/<company_id>")
@@ -56,13 +57,18 @@ def get_company(company_id: str):
     company = CompanyService.get_company(company_id=UUID(company_id))
     if not company:
         raise Exception("Company not found")
-    return company.dict(), 200
+    return jsonify(company), 200
 
 
 @app.get("/companies")
 def get_companies():
-    companies = CompanyService.get_companies()
-    return [company.dict() for company in companies], 200
+    query_params = {}
+    query_params["sort"] = request.args.get("sort")
+    query_params["limit"] = request.args.get("limit")
+    query_params["start"] = request.args.get("start")
+    query_params["dir"] = request.args.get("dir")
+    companies: list[Company] = CompanyService.get_companies(**query_params)
+    return [company for company in companies], 200
 
 
 @app.delete("/companies/<cnpj>")
