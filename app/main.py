@@ -3,8 +3,18 @@ from flask import Flask, Response, request
 
 from app.models.company import Company
 from app.services.company_service import CompanyService
+from app.db import db
+from app import models  # noqa
 
 app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    "postgresql://postgres:eStractaPassword@localhost:5432/eStracta"
+)
+
+# initialize the app with the extension
+db.init_app(app)
+with app.app_context():
+    db.create_all()
 
 
 @app.route("/")

@@ -1,23 +1,40 @@
 from datetime import datetime
 from typing import Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 from app.models.company import Company
+from app.models.user import CompanyModel
+from app.db import db
 
 
 class CompanyService:
     companies: list[Company] = []
 
+    # @classmethod
+    # def add_company(
+    #     cls, cnpj: str, nome_razao: str, nome_fantasia: str, cnae: str
+    # ) -> Company:
+    #     new_company = Company(
+    #         cnpj=cnpj,
+    #         nome_razao=nome_razao,
+    #         nome_fantasia=nome_fantasia,
+    #         cnae=cnae,
+    #     )
+    #     cls.companies.append(new_company)
+    #     return new_company
+
     @classmethod
     def add_company(
         cls, cnpj: str, nome_razao: str, nome_fantasia: str, cnae: str
     ) -> Company:
-        new_company = Company(
+        new_company = CompanyModel(
+            id=uuid4(),
             cnpj=cnpj,
             nome_razao=nome_razao,
             nome_fantasia=nome_fantasia,
             cnae=cnae,
         )
-        cls.companies.append(new_company)
+        db.session.add(new_company)
+        db.session.commit()
         return new_company
 
     @classmethod
