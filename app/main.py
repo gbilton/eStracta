@@ -1,12 +1,14 @@
-from typing import Optional
 from uuid import UUID
 from flask import Flask, Response, jsonify, request
 from flask_migrate import Migrate
 
+
+from app.exceptions import InvalidParameters
 from app.models.company import Company
 from app.services.company_service import CompanyService
 from app.db import db
 from app import models  # noqa
+from app.utils import validate_parameters
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = (
@@ -21,16 +23,32 @@ with app.app_context():
 
 
 @app.route("/")
-def hello_world():
-    return "<p>Hello, World!</p>"
+def check_health():
+    return "ok"
 
 
 @app.post("/companies")
 def create_company():
-    cnpj: str = request.form["cnpj"]
-    nome_razao: str = request.form["nome_razao"]
-    nome_fantasia: str = request.form["nome_fantasia"]
-    cnae: str = request.form["cnae"]
+    try:
+        cnpj: str = request.form["cnpj"]
+        nome_razao: str = request.form["nome_razao"]
+        nome_fantasia: str = request.form["nome_fantasia"]
+        cnae: str = request.form["cnae"]
+    except KeyError:
+        return (
+            "Os seguintes campos são obrigatórios: cnpj, nome_razao, nome_fantasia, cnae.",
+            400,
+        )
+
+    try:
+        validate_parameters(
+            cnpj=cnpj,
+            nome_razao=nome_razao,
+            nome_fantasia=nome_fantasia,
+            cnae=cnae,
+        )
+    except InvalidParameters as e:
+        return jsonify(error=str(e)), 400
 
     created_company: Company = CompanyService.add_company(
         cnpj=cnpj,
