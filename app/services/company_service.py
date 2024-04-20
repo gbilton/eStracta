@@ -1,6 +1,9 @@
 from datetime import datetime
 from typing import Optional
-from uuid import UUID, uuid4
+from uuid import UUID
+
+from psycopg2 import IntegrityError
+from app.exceptions import DuplicateEntry
 from app.models.company import Company
 from app.models.company import Company
 from app.db import db
@@ -13,14 +16,18 @@ class CompanyService:
         cls, cnpj: str, nome_razao: str, nome_fantasia: str, cnae: str
     ) -> Company:
         new_company = Company(
-            id=uuid4(),
             cnpj=cnpj,
             nome_razao=nome_razao,
             nome_fantasia=nome_fantasia,
             cnae=cnae,
         )
+        # existing_company = Company.query.filter_by(cnpj=cnpj).first()
+        # if existing_company:
+        #     raise DuplicateEntry("Empresa já cadastrada.")
+
         db.session.add(new_company)
         db.session.commit()
+
         return new_company
 
     @classmethod

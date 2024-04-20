@@ -1,7 +1,8 @@
 from uuid import UUID
 from flask import Flask, Response, jsonify, request
 from flask_migrate import Migrate
-
+from sqlalchemy.exc import IntegrityError
+from psycopg2.errors import UniqueViolation
 
 from app.exceptions import InvalidParameters
 from app.models.company import Company
@@ -14,12 +15,13 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = (
     "postgresql://postgres:eStractaPassword@localhost:5432/eStracta"
 )
-migrate = Migrate(app, db)
 
 # initialize the app with the extension
 db.init_app(app)
 with app.app_context():
     db.create_all()
+
+migrate = Migrate(app, db)
 
 
 @app.route("/")
@@ -36,7 +38,7 @@ def create_company():
         cnae: str = request.form["cnae"]
     except KeyError:
         return (
-            "Os seguintes campos são obrigatórios: cnpj, nome_razao, nome_fantasia, cnae.",
+            "The following body parameters are required: cnpj, nome_razao, nome_fantasia, cnae.",
             400,
         )
 
@@ -47,15 +49,19 @@ def create_company():
             nome_fantasia=nome_fantasia,
             cnae=cnae,
         )
-    except InvalidParameters as e:
-        return jsonify(error=str(e)), 400
+    except InvalidParameters as error:
+        return jsonify(error=str(error)), 400
 
-    created_company: Company = CompanyService.add_company(
-        cnpj=cnpj,
-        nome_razao=nome_razao,
-        nome_fantasia=nome_fantasia,
-        cnae=cnae,
-    )
+    try:
+        created_company: Company = CompanyService.add_company(
+            cnpj=cnpj,
+            nome_razao=nome_razao,
+            nome_fantasia=nome_fantasia,
+            cnae=cnae,
+        )
+    except IntegrityError as error:
+        assert isinstance(error.orig, UniqueViolation)
+        return jsonify(error=str("Company already registered")), 400
 
     return jsonify(created_company), 201
 
