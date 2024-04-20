@@ -70,6 +70,10 @@ def create_company():
 def update_company(company_id: str):
     nome_fantasia: str = request.form["nome_fantasia"]
     cnae: str = request.form["cnae"]
+    try:
+        validate_parameters(cnae=cnae)
+    except InvalidParameters as error:
+        return jsonify(error=str(error)), 400
     updated_company: Company = CompanyService.update_company(
         company_id=UUID(company_id), nome_fantasia=nome_fantasia, cnae=cnae
     )

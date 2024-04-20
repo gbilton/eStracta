@@ -6,15 +6,20 @@ from app.exceptions import InvalidParameters
 
 
 def validate_parameters(
-    cnpj: str,
-    cnae: str,
-    nome_razao: Optional[str],
-    nome_fantasia: Optional[str],
+    cnpj: Optional[str] = None,
+    cnae: Optional[str] = None,
+    nome_razao: Optional[str] = None,
+    nome_fantasia: Optional[str] = None,
 ) -> None:
-    if not validate_cnpj(cnpj=cnpj):
-        raise InvalidParameters("Invalid CNPJ")
-    if not validate_cnae(cnae=cnae):
-        raise InvalidParameters("Invalid CNAE")
+
+    if cnpj:
+        valid_cnpj = validate_cnpj(cnpj=cnpj)
+        if not valid_cnpj:
+            raise InvalidParameters("Invalid CNPJ")
+    if cnae:
+        valid_cnae = validate_cnae(cnae=cnae)
+        if not valid_cnae:
+            raise InvalidParameters("Invalid CNAE")
 
 
 def validate_cnpj(cnpj):
