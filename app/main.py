@@ -9,7 +9,7 @@ from app.models.company import Company
 from app.services.company_service import CompanyService
 from app.db import db
 from app import models  # noqa
-from app.utils import format_cnae, validate_parameters
+from app.utils import format_cnae, format_cnpj, validate_parameters
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = (
@@ -102,6 +102,7 @@ def get_companies():
 
 @app.delete("/companies/<cnpj>")
 def delete_company(cnpj: str):
+    cnpj = format_cnpj(cnpj=cnpj)
     CompanyService.delete_company(cnpj=cnpj)
     return Response(status=204)
 
