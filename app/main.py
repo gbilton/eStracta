@@ -9,7 +9,7 @@ from app.models.company import Company
 from app.services.company_service import CompanyService
 from app.db import db
 from app import models  # noqa
-from app.utils import validate_parameters
+from app.utils import format_cnae, validate_parameters
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = (
@@ -70,6 +70,7 @@ def create_company():
 def update_company(company_id: str):
     nome_fantasia: str = request.form["nome_fantasia"]
     cnae: str = request.form["cnae"]
+    cnae = format_cnae(cnae)
     try:
         validate_parameters(cnae=cnae)
     except InvalidParameters as error:
