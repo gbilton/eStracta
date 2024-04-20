@@ -50,11 +50,11 @@ class CompanyService:
         if limit is not None:
             stmt = stmt.limit(limit)
 
-        if sort is not None:
-            if dir is None or dir == SortOrder.ASCENDING:
-                stmt = stmt.order_by(getattr(Company, sort.value))
-            elif dir == SortOrder.DESCENDING:
-                stmt = stmt.order_by(getattr(Company, sort.value).desc())
+        if any(sort == item.value for item in CompanySortField):
+            if dir is None or dir == SortOrder.ASCENDING.value:
+                stmt = stmt.order_by(getattr(Company, sort))
+            elif dir == SortOrder.DESCENDING.value:
+                stmt = stmt.order_by(getattr(Company, sort).desc())
 
         companies = db.session.execute(stmt).scalars().all()
 
