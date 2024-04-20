@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from psycopg2.errors import UniqueViolation
 
 from app.exceptions import InvalidParameters
+from app.mock_data import create_mock_data
 from app.models.company import Company
 from app.services.company_service import CompanyService
 from app.db import db
@@ -105,6 +106,12 @@ def delete_company(cnpj: str):
     cnpj = format_cnpj(cnpj=cnpj)
     CompanyService.delete_company(cnpj=cnpj)
     return Response(status=204)
+
+
+@app.post("/mock")
+def create_mock():
+    create_mock_data()
+    return "success", 201
 
 
 if __name__ == "__main__":
