@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 from pycpfcnpj import cpfcnpj
 
@@ -32,3 +33,17 @@ def count_digits(input_string):
         if char.isdigit():
             count += 1
     return count
+
+
+def extract_digits(s: str) -> str:
+    return "".join(re.findall(r"\d", s))
+
+
+def format_cnpj(cnpj: str) -> str:
+    digits = extract_digits(cnpj)
+    return f"{digits[:2]}.{digits[2:5]}.{digits[5:8]}/{digits[8:12]}-{digits[12:]}"
+
+
+def format_cnae(cnae: str) -> str:
+    digits = extract_digits(cnae)
+    return f"{digits[:4]}-{digits[4]}/{digits[5:]}"

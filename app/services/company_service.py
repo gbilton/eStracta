@@ -8,6 +8,7 @@ from app.models.company import Company
 from app.models.company import Company
 from app.db import db
 from app.models.enums import CompanySortField, SortOrder
+from app.utils import format_cnae, format_cnpj
 
 
 class CompanyService:
@@ -15,15 +16,15 @@ class CompanyService:
     def add_company(
         cls, cnpj: str, nome_razao: str, nome_fantasia: str, cnae: str
     ) -> Company:
+        cnpj = format_cnpj(cnpj)
+        cnae = format_cnae(cnae)
+
         new_company = Company(
             cnpj=cnpj,
             nome_razao=nome_razao,
             nome_fantasia=nome_fantasia,
             cnae=cnae,
         )
-        # existing_company = Company.query.filter_by(cnpj=cnpj).first()
-        # if existing_company:
-        #     raise DuplicateEntry("Empresa já cadastrada.")
 
         db.session.add(new_company)
         db.session.commit()
