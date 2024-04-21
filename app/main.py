@@ -1,5 +1,5 @@
 from uuid import UUID
-from flask import Flask, jsonify, request
+from flask import Flask, request
 from flask_migrate import Migrate
 from flask_restx import Api, Resource, fields
 from sqlalchemy.exc import IntegrityError
@@ -105,9 +105,9 @@ class CompanyListRoutes(Resource):
             )
         except IntegrityError as error:
             assert isinstance(error.orig, UniqueViolation)
-            return jsonify(error=str("Company already registered")), 400
+            raise BadRequest(str("Company already registered"))
 
-        return created_company.__dict__, 201
+        return created_company, 201
 
     @api.doc(
         params={
@@ -139,7 +139,7 @@ class CompanyRoutes(Resource):
             raise BadRequest("Invalid ID.")
 
         company = CompanyService.get_company(company_id=company_uuid)
-        return company.__dict__, 200
+        return company, 200
 
     @api.expect(company_update_model)
     @api.marshal_with(company_model)
@@ -158,16 +158,21 @@ class CompanyRoutes(Resource):
         updated_company: Company = CompanyService.update_company(
             company_id=company_uuid, nome_fantasia=nome_fantasia, cnae=cnae
         )
-        return updated_company.__dict__, 200
+        return updated_company, 200
 
 
-@api.route("/companies/<int:cnpj>")
+@api.route("/companies/<cnpj>")
 class CompanyDelete(Resource):
+    @api.doc(
+        params={
+            "cnpj": "The Company's CNPJ (only numbers). Example: 00623904000173"
+        }
+    )
     @api.response(204, "Company deleted.")
-    def delete(self, cnpj: int):
-        cnpj = format_cnpj(cnpj=str(cnpj))
+    def delete(self, cnpj: str):
+        cnpj = format_cnpj(cnpj=cnpj)
         CompanyService.delete_company(cnpj=cnpj)
-        return
+        return "", 204
 
 
 @app.post("/mock")
