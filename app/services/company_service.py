@@ -2,9 +2,6 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from psycopg2 import IntegrityError
-from app.exceptions import DuplicateEntry
-from app.models.company import Company
 from app.models.company import Company
 from app.db import db
 from app.models.enums import CompanySortField, SortOrder

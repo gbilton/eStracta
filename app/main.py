@@ -1,6 +1,5 @@
-from typing_extensions import ReadOnly
 from uuid import UUID
-from flask import Flask, Response, jsonify, request
+from flask import Flask, jsonify, request
 from flask_migrate import Migrate
 from flask_restx import Api, Resource, fields
 from sqlalchemy.exc import IntegrityError
