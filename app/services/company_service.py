@@ -33,7 +33,9 @@ class CompanyService:
 
     @classmethod
     def get_company(cls, company_id: UUID) -> Optional[Company]:
-        company = db.get_or_404(Company, company_id)
+        company = db.get_or_404(
+            Company, company_id, description="Company not found."
+        )
         return company
 
     @classmethod
@@ -68,7 +70,11 @@ class CompanyService:
         cnae: Optional[str],
     ) -> Optional[Company]:
 
-        company = db.get_or_404(Company, company_id)
+        company = db.get_or_404(
+            Company,
+            company_id,
+            description=f"Company with ID {company_id} not found.",
+        )
         modified: bool = False
         if nome_fantasia:
             company.nome_fantasia = nome_fantasia
@@ -85,7 +91,9 @@ class CompanyService:
     @classmethod
     def delete_company(cls, cnpj: str) -> None:
         stmt = db.select(Company).where(Company.cnpj == cnpj)
-        company = db.one_or_404(stmt)
+        company = db.one_or_404(
+            stmt, description=f"Company with CNPJ {cnpj} not found."
+        )
         db.session.delete(company)
         db.session.commit()
         return

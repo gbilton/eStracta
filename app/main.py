@@ -1,8 +1,11 @@
+from typing_extensions import ReadOnly
 from uuid import UUID
 from flask import Flask, Response, jsonify, request
 from flask_migrate import Migrate
+from flask_restx import Api, Resource, fields
 from sqlalchemy.exc import IntegrityError
 from psycopg2.errors import UniqueViolation
+from werkzeug.exceptions import BadRequest
 
 from app.exceptions import InvalidParameters
 from app.mock_data import create_mock_data
@@ -15,6 +18,44 @@ from app.utils import format_cnae, format_cnpj, validate_parameters
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = (
     "postgresql://postgres:eStractaPassword@localhost:5432/eStracta"
+)
+
+api = Api(app, doc="/docs")
+
+company_update_model = api.model(
+    "CompanyUpdate",
+    {
+        "nome_fantasia": fields.String(
+            required=False, description="The Company's Nome Fantasia."
+        ),
+        "cnae": fields.String(
+            required=False, description="The Company's CNAE."
+        ),
+    },
+)
+company_model = api.model(
+    "Company",
+    {
+        "id": fields.String(readonly=True, description="Unique identifier."),
+        "created_at": fields.DateTime(
+            readonly=True, description="Date and time of creation."
+        ),
+        "updated_at": fields.DateTime(
+            readonly=True, description="Last date and time of update."
+        ),
+        "cnpj": fields.String(
+            required=True, description="The Company's CNPJ."
+        ),
+        "nome_razao": fields.String(
+            required=True, description="The Company's Nome Razão."
+        ),
+        "nome_fantasia": fields.String(
+            required=True, description="The Company's Nome Fantasia."
+        ),
+        "cnae": fields.String(
+            required=True, description="The Company's CNAE."
+        ),
+    },
 )
 
 # initialize the app with the extension
@@ -30,82 +71,104 @@ def check_health():
     return "ok"
 
 
-@app.post("/companies")
-def create_company():
-    try:
-        cnpj: str = request.form["cnpj"]
-        nome_razao: str = request.form["nome_razao"]
-        nome_fantasia: str = request.form["nome_fantasia"]
-        cnae: str = request.form["cnae"]
-    except KeyError:
-        return (
-            "The following body parameters are required: cnpj, nome_razao, nome_fantasia, cnae.",
-            400,
-        )
+@api.route("/companies")
+class CompanyListRoutes(Resource):
+    @api.expect(company_model)
+    @api.marshal_with(company_model, code=201)
+    def post(self):
+        data = api.payload
+        try:
+            cnpj: str = data["cnpj"]
+            nome_razao: str = data["nome_razao"]
+            nome_fantasia: str = data["nome_fantasia"]
+            cnae: str = data["cnae"]
+        except KeyError:
+            raise BadRequest(
+                "The following body parameters are required: cnpj, nome_razao, nome_fantasia, cnae."
+            )
 
-    try:
-        validate_parameters(
-            cnpj=cnpj,
-            nome_razao=nome_razao,
-            nome_fantasia=nome_fantasia,
-            cnae=cnae,
-        )
-    except InvalidParameters as error:
-        return jsonify(error=str(error)), 400
+        try:
+            validate_parameters(
+                cnpj=cnpj,
+                nome_razao=nome_razao,
+                nome_fantasia=nome_fantasia,
+                cnae=cnae,
+            )
+        except InvalidParameters as error:
+            raise BadRequest(str(error))
 
-    try:
-        created_company: Company = CompanyService.add_company(
-            cnpj=cnpj,
-            nome_razao=nome_razao,
-            nome_fantasia=nome_fantasia,
-            cnae=cnae,
-        )
-    except IntegrityError as error:
-        assert isinstance(error.orig, UniqueViolation)
-        return jsonify(error=str("Company already registered")), 400
+        try:
+            created_company: Company = CompanyService.add_company(
+                cnpj=cnpj,
+                nome_razao=nome_razao,
+                nome_fantasia=nome_fantasia,
+                cnae=cnae,
+            )
+        except IntegrityError as error:
+            assert isinstance(error.orig, UniqueViolation)
+            return jsonify(error=str("Company already registered")), 400
 
-    return jsonify(created_company), 201
+        return created_company.__dict__, 201
 
-
-@app.patch("/companies/<company_id>")
-def update_company(company_id: str):
-    nome_fantasia: str = request.form["nome_fantasia"]
-    cnae: str = request.form["cnae"]
-    cnae = format_cnae(cnae)
-    try:
-        validate_parameters(cnae=cnae)
-    except InvalidParameters as error:
-        return jsonify(error=str(error)), 400
-    updated_company: Company = CompanyService.update_company(
-        company_id=UUID(company_id), nome_fantasia=nome_fantasia, cnae=cnae
+    @api.doc(
+        params={
+            "sort": "Sort order for companies",
+            "limit": "Limit number of companies to retrieve",
+            "start": "Start index for retrieving companies",
+            "dir": "Direction for sorting companies",
+        },
     )
-    return jsonify(updated_company), 200
+    @api.marshal_list_with(company_model)
+    def get(self):
+        query_params = {}
+        query_params["sort"] = request.args.get("sort")
+        query_params["limit"] = request.args.get("limit")
+        query_params["start"] = request.args.get("start")
+        query_params["dir"] = request.args.get("dir")
+        companies: list[Company] = CompanyService.get_companies(**query_params)
+        return companies, 200
 
 
-@app.get("/companies/<company_id>")
-def get_company(company_id: str):
-    company = CompanyService.get_company(company_id=UUID(company_id))
-    if not company:
-        raise Exception("Company not found")
-    return jsonify(company), 200
+@api.route("/companies/<company_id>")
+class CompanyRoutes(Resource):
+    @api.doc(params={"company_id": "The company's unique identifier."})
+    @api.marshal_with(company_model)
+    def get(self, company_id: str):
+        try:
+            company_uuid = UUID(company_id)
+        except ValueError:
+            raise BadRequest("Invalid ID.")
+
+        company = CompanyService.get_company(company_id=company_uuid)
+        return company.__dict__, 200
+
+    @api.expect(company_update_model)
+    @api.marshal_with(company_model)
+    def patch(self, company_id: str):
+        nome_fantasia: str = api.payload.get("nome_fantasia")
+        cnae: str = api.payload.get("cnae")
+        try:
+            validate_parameters(cnae=cnae)
+        except InvalidParameters as error:
+            raise BadRequest(str(error))
+        cnae = format_cnae(cnae)
+        try:
+            company_uuid = UUID(company_id)
+        except ValueError:
+            raise BadRequest("Invalid ID.")
+        updated_company: Company = CompanyService.update_company(
+            company_id=company_uuid, nome_fantasia=nome_fantasia, cnae=cnae
+        )
+        return updated_company.__dict__, 200
 
 
-@app.get("/companies")
-def get_companies():
-    query_params = {}
-    query_params["sort"] = request.args.get("sort")
-    query_params["limit"] = request.args.get("limit")
-    query_params["start"] = request.args.get("start")
-    query_params["dir"] = request.args.get("dir")
-    companies: list[Company] = CompanyService.get_companies(**query_params)
-    return [company for company in companies], 200
-
-
-@app.delete("/companies/<cnpj>")
-def delete_company(cnpj: str):
-    cnpj = format_cnpj(cnpj=cnpj)
-    CompanyService.delete_company(cnpj=cnpj)
-    return Response(status=204)
+@api.route("/companies/<int:cnpj>")
+class CompanyDelete(Resource):
+    @api.response(204, "Company deleted.")
+    def delete(self, cnpj: int):
+        cnpj = format_cnpj(cnpj=str(cnpj))
+        CompanyService.delete_company(cnpj=cnpj)
+        return
 
 
 @app.post("/mock")
