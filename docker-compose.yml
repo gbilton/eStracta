@@ -1,20 +1,24 @@
+version: '3'
+
 services:
 
   api:
     container_name: eStracta_api
     build: .
     ports:
-      - 5000:5000
+      - "5000:5000"
     depends_on:
       - postgres
+    environment:
+      - DB_LOCATION=postgres
     expose:
-      - 5000
+      - "5000"
 
   postgres:
     image: postgres
     restart: always
     ports:
-      - 5432:5432
+      - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: eStractaPassword
@@ -22,4 +26,4 @@ services:
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
     expose:
-      - 5432
+      - "5432"

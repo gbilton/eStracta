@@ -6,6 +6,7 @@ from flask_cors import CORS
 from sqlalchemy.exc import IntegrityError
 from psycopg2.errors import UniqueViolation
 from werkzeug.exceptions import BadRequest
+from dotenv import dotenv_values
 
 from app.exceptions import InvalidParameters
 from app.mock_data import create_mock_data
@@ -15,9 +16,12 @@ from app.db import db
 from app import models  # noqa
 from app.utils import format_cnae, format_cnpj, validate_parameters
 
+config = dotenv_values()
+db_location = config.get("DB_LOCATION", "postgres")
+
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = (
-    "postgresql://postgres:eStractaPassword@localhost:5432/eStracta"
+    f"postgresql://postgres:eStractaPassword@{db_location}:5432/eStracta"
 )
 CORS(app)
 
