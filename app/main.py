@@ -2,6 +2,7 @@ from uuid import UUID
 from flask import Flask, request
 from flask_migrate import Migrate
 from flask_restx import Api, Resource, fields
+from flask_cors import CORS
 from sqlalchemy.exc import IntegrityError
 from psycopg2.errors import UniqueViolation
 from werkzeug.exceptions import BadRequest
@@ -18,6 +19,7 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = (
     "postgresql://postgres:eStractaPassword@localhost:5432/eStracta"
 )
+CORS(app)
 
 api = Api(app, doc="/docs")
 
