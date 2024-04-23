@@ -7,7 +7,11 @@ Este é o envio para a Tarefa: Desenvolvimento de Endpoints para CRUD de Cadastr
 Para iniciar o backend, você pode usar o Docker Compose (recomendado) seguindo estes passos:
 
 1. Clone este repositório.
-2. No terminal, insira o seguinte comando:
+2. Entre no diretório:
+
+`cd eStracta`
+
+3. No terminal, insira o seguinte comando:
 
 `docker compose up -d`
 
@@ -44,13 +48,15 @@ Se preferir rodar o aplicativo sem Docker, siga estes passos:
 - banco de dados: eStracta
 
 2. Clone este repositório.
-3. Crie um virtual environment:
+3. Entre no diretório:
+   `cd eStracta`
+4. Crie um virtual environment:
    `python -m venv .venv`
-4. Ative o virtual environment:
+5. Ative o virtual environment:
    `. .venv`
-5. Instale as dependencias:
+6. Instale as dependencias:
    `pip install -r requirements.txt`
-6. Digite no terminal:
+7. Digite no terminal:
    `flask --app app.main run`
 
 Obs: A senha está visível apenas para facilitar o processo, pois este é um envio de projeto temporário.
