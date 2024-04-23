@@ -53,7 +53,7 @@ Se preferir rodar o aplicativo sem Docker, siga estes passos:
 4. Crie um virtual environment:
    `python -m venv .venv`
 5. Ative o virtual environment:
-   `. .venv`
+   `. .venv/bin/activate`
 6. Instale as dependencias:
    `pip install -r requirements.txt`
 7. Digite no terminal:
