@@ -55,7 +55,7 @@ Se preferir rodar o aplicativo sem Docker, siga estes passos:
 5. Ative o virtual environment:
    `. .venv/bin/activate`
 6. Instale as dependencias:
-   `pip install -r requirements.txt`
+   `pip install -r app/requirements.txt`
 7. Digite no terminal:
    `flask --app app.main run`
 
