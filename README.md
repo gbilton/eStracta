@@ -15,7 +15,7 @@ Para iniciar o backend, você pode usar o Docker Compose (recomendado) seguindo 
 
 `docker compose up -d`
 
-A documentação Swagger estará disponível em http://localhost:5000/docs.
+A documentação Swagger estará disponível em http://localhost:5000/docs. Por ela, é possível testar todos os endpoints.
 
 ## Populando a Base de Dados
 
