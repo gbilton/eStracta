@@ -117,10 +117,10 @@ class CompanyListRoutes(Resource):
 
     @api.doc(
         params={
-            "sort": "Sort order for companies",
+            "sort": "Which field to sort the companies by. (id, cpnj, nome_razao, nome_fantasia, cnae, created_at, updated_at)",
             "limit": "Limit number of companies to retrieve",
             "start": "Start index for retrieving companies",
-            "dir": "Direction for sorting companies",
+            "dir": "Direction for sorting companies. desc for descending, asc for ascending.",
         },
     )
     @api.marshal_list_with(company_model)
