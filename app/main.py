@@ -25,7 +25,12 @@ app.config["SQLALCHEMY_DATABASE_URI"] = (
 )
 CORS(app)
 
-api = Api(app, doc="/docs")
+api = Api(
+    app,
+    title="Company management API",
+    description="An API to manage companies",
+    doc="/docs",
+)
 
 company_update_model = api.model(
     "CompanyUpdate",
