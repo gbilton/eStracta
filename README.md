@@ -20,11 +20,11 @@ Para popular a base de dados com dados mock para serem usados pelo frontend, sig
 1. Certifique-se de que a API e o banco de dados PostgreSQL estão em execução.
 2. No terminal, execute o seguinte comando para tornar o script executável:
 
-`chmod +x generate_mock.csv`
+`chmod +x generate_mock.sh`
 
 3. Em seguida, execute o script:
 
-`./generate_mock.csv`
+`./generate_mock.sh`
 
 Os dados mock devem agora estar na base de dados e prontos para serem visualizados pelo frontend.
 
